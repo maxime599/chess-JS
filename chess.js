@@ -584,6 +584,7 @@ let last_two_cases = [[0,0],[0,0]]
 let first_play = true
 async function gameLoop() {
 let end_game = false;
+let liste_plateaux = [structuredClone(plateau)]
 while (end_game === false) {
     
     let good_second_case = false;
@@ -737,7 +738,7 @@ if (plateau[0][l_case_2][0] === "P" || plateau[7][l_case_2][0] === "P") {
 
 // Changement de joueur
 joueur = (joueur === "B") ? "N" : "B";
-
+liste_plateaux.push(structuredClone(plateau));
 // Vérification si le joueur peut encore bouger
 if (can_moov(plateau, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible)) {
     if (is_echecs(plateau, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible, true)) {
@@ -782,6 +783,16 @@ if (est_nulle_par_manque_de_materiel(liste_blanc, liste_noire)) {
     afficher_resultat_fin_partie(plateau, resultat=1, joueur=null)
 }
 
+const count = liste_plateaux.filter(
+  p => JSON.stringify(p) === JSON.stringify(plateau)
+).length;
+
+if (count === 3) {
+  afficher_resultat_fin_partie(plateau, 1, null);
+  end_game = true;
+  console.log("nul")
+  console.log(liste_plateaux)
+}
 // Redessine le plateau
 afficherPlateau(plateau)
 await new Promise(resolve => setTimeout(resolve, 50)); // pause pour forcer le rendu
