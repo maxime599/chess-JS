@@ -123,6 +123,78 @@ function afficherDot(
     echiquier.appendChild(div);
   });
 }
+function afficher_resultat_fin_partie(plateau, resultat, joueur) {
+  setTimeout(() => {
+    let roiBlancPos = null;
+    let roiNoirPos = null;
+
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const [piece, couleur] = plateau[i][j];
+        if (piece === "R") {
+          if (couleur === "B") roiBlancPos = [i, j];
+          else if (couleur === "N") roiNoirPos = [i, j];
+        }
+      }
+    }
+
+    if (!roiBlancPos || !roiNoirPos) {
+      console.error("Erreur : roi blanc ou noir introuvable.");
+      return;
+    }
+
+    // Nettoyer les anciennes images
+    const echiquier = document.getElementById("echiquier");
+    echiquier.querySelectorAll(".resultat-image").forEach(img => img.remove());
+
+    const noms = {
+      victoire: "gagnant.png",
+      defaite: "perdant.png",
+      nul: "nul - Copie.png"
+    };
+
+    function afficherImageDansCase(i, j, src) {
+      const img = document.createElement("img");
+      img.src = `Pieces/${src}`;
+      img.classList.add("resultat-image");
+      img.style.position = "absolute";
+      img.style.width = "80px";
+      img.style.height = "80px";
+
+      const caseSize = 80;
+      let x = j * caseSize + caseSize * 0.5;
+      let y = i * caseSize - caseSize * 0.5;
+
+      if (y < 0) y = -26;
+      if (x > 682) x = 664;
+
+      img.style.left = `${x}px`;
+      img.style.top = `${y}px`;
+      img.style.zIndex = 10;
+      img.style.pointerEvents = "none";
+
+      echiquier.appendChild(img);
+    }
+
+    if (resultat === 1) {
+      // Match nul → image sur les 2 rois
+      [roiBlancPos, roiNoirPos].forEach(([i, j]) => {
+        afficherImageDansCase(i, j, noms.nul);
+      });
+    } else {
+      const gagnant = joueur;
+      const perdant = joueur === "B" ? "N" : "B";
+      const positions = { B: roiBlancPos, N: roiNoirPos };
+
+      const [gi, gj] = positions[gagnant];
+      const [pi, pj] = positions[perdant];
+
+      afficherImageDansCase(gi, gj, noms.victoire);
+      afficherImageDansCase(pi, pj, noms.defaite);
+    }
+  }, 100);
+}
+
 
 
 function is_legal_pion(plateau, n_case_1, l_case_1, n_case_2, l_case_2, is_en_passant_possible, en_passant_collone) {
@@ -676,11 +748,14 @@ if (can_moov(plateau, joueur, is_en_passant_possible, en_passant_collone, is_roc
         console.log("Victoire");
         if (joueur === "N") {
             console.log("des blancs");
+            afficher_resultat_fin_partie(plateau, resultat=0, joueur="B")
         } else {
             console.log("des noirs");
+            afficher_resultat_fin_partie(plateau, resultat=0, joueur="N")
         }
     } else {
         console.log("nul");
+        afficher_resultat_fin_partie(plateau, resultat=1, joueur=null)
     }
     end_game = true;
 }
@@ -704,6 +779,7 @@ for (let row of plateau) {
 if (est_nulle_par_manque_de_materiel(liste_blanc, liste_noire)) {
     end_game = true;
     console.log("nul");
+    afficher_resultat_fin_partie(plateau, resultat=1, joueur=null)
 }
 
 // Redessine le plateau
