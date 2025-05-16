@@ -27,12 +27,30 @@ const pieceMap = {
   "R": "k", // roi
 };
 
-function afficherPlateau() {
+function afficherPlateau(plateau, colorier_x = null, colorier_y = null, colorier_x2 = null, colorier_y2 = null, colorier_x3 = null, colorier_y3 = null) {
   const echiquier = document.getElementById("echiquier");
 
-  // Supprime les anciennes pièces
+  // Supprime les anciennes pièces et surbrillances
   document.querySelectorAll(".piece").forEach(el => el.remove());
+  document.querySelectorAll(".surbrillance").forEach(el => el.remove());
 
+  // Fonction pour ajouter une case rouge
+  function colorierCase(x, y) {
+    if (x !== null && y !== null) {
+      const div = document.createElement("div");
+      div.classList.add("surbrillance");
+      div.style.top = `${x * 80}px`;
+      div.style.left = `${y * 80}px`;
+      echiquier.appendChild(div);
+    }
+  }
+
+  // Ajoute les cases rouges
+  colorierCase(colorier_y, colorier_x);
+  colorierCase(colorier_y2, colorier_x2);
+  colorierCase(colorier_y3, colorier_x3);
+
+  // Ajoute les pièces
   for (let ligne = 0; ligne < 8; ligne++) {
     for (let col = 0; col < 8; col++) {
       const [pieceFr, couleur] = plateau[ligne][col];
@@ -53,6 +71,7 @@ function afficherPlateau() {
     }
   }
 }
+
 
 function is_legal_pion(plateau, n_case_1, l_case_1, n_case_2, l_case_2, is_en_passant_possible, en_passant_collone) {
     if (plateau[n_case_1][l_case_1][1] === "B") { // Pion blanc
@@ -430,14 +449,15 @@ let y_case = 0;
 let is_en_passant_possible = false;
 let en_passant_collone = 0;
 // [haut gauche, haut droite, bas droite, bas gauche]
-let is_rock_possible = [true, true, false, false];
+let is_rock_possible = [true, true, true, true];
 let legal_cases_no_echecs_liste_copy = [];
 let n_case_2;
 let l_case_2;
 
 afficherPlateau(plateau);
 draw_plateau(plateau)
-
+let last_two_cases = [[0,0],[0,0]]
+let first_play = true
 async function gameLoop() {
 let end_game = false;
 while (end_game === false) {
@@ -473,10 +493,19 @@ while (end_game === false) {
             console.log("case sélectionée : ", x_case, " ", y_case);
             
         }
-        
+        if (first_play) {
+            afficherPlateau(plateau, x_case, y_case);
+            } else {
+            afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
+            }
         console.log("ici1")
         let selected_same_color = true;
         while (selected_same_color === true) {
+            if (first_play) {
+                afficherPlateau(plateau, x_case, y_case);
+                } else {
+                afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
+                }
             console.log(n_case_1)
             console.log("ici1.5")
             let result = await move(plateau, x_case, y_case, true, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
@@ -505,6 +534,12 @@ while (end_game === false) {
                 }
             }
         }
+         if (first_play) {
+            afficherPlateau(plateau, x_case, y_case);
+            } 
+            else {
+            afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
+            }
         console.log("ici2")
     }
     if ((is_en_passant_possible === true && n_case_1 === 3 && l_case_2 === en_passant_collone && plateau[n_case_1][l_case_1][0] === "P" && joueur === "B") ||
@@ -625,6 +660,22 @@ if (est_nulle_par_manque_de_materiel(liste_blanc, liste_noire)) {
 // Redessine le plateau
 afficherPlateau(plateau)
 await new Promise(resolve => setTimeout(resolve, 50)); // pause pour forcer le rendu
+last_two_cases = [
+  [l_case_1, n_case_1],
+  [l_case_2, n_case_2]
+];
+
+afficherPlateau(
+  plateau,
+  null,
+  null,
+  last_two_cases[0][0],
+  last_two_cases[0][1],
+  last_two_cases[1][0],
+  last_two_cases[1][1]
+);
+
+first_play = false;
 
 }
 }
