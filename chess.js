@@ -33,8 +33,9 @@ function afficherPlateau(plateau, colorier_x = null, colorier_y = null, colorier
   // Supprime les anciennes pièces et surbrillances
   document.querySelectorAll(".piece").forEach(el => el.remove());
   document.querySelectorAll(".surbrillance").forEach(el => el.remove());
-
-  // Fonction pour ajouter une case rouge
+  const anciensPoints = document.querySelectorAll(".dot-plein, .dot-cercle");
+  anciensPoints.forEach(dot => dot.remove());
+  // Fonction pour ajouter une case jaune
   function colorierCase(x, y) {
     if (x !== null && y !== null) {
       const div = document.createElement("div");
@@ -45,7 +46,7 @@ function afficherPlateau(plateau, colorier_x = null, colorier_y = null, colorier
     }
   }
 
-  // Ajoute les cases rouges
+  // Ajoute les cases jaune
   colorierCase(colorier_y, colorier_x);
   colorierCase(colorier_y2, colorier_x2);
   colorierCase(colorier_y3, colorier_x3);
@@ -70,6 +71,57 @@ function afficherPlateau(plateau, colorier_x = null, colorier_y = null, colorier
       }
     }
   }
+}
+function afficherDot(
+  plateau,
+  n_case_1,
+  l_case_1,
+  joueur,
+  is_en_passant_possible,
+  en_passant_colonne,
+  is_rock_possible,
+  legal_cases_no_echecs_liste_copy = null,
+  ne_pas_calculer_cases = 0
+
+) {
+  const anciensPoints = document.querySelectorAll(".dot-plein, .dot-cercle");
+  anciensPoints.forEach(dot => dot.remove());
+  if (ne_pas_calculer_cases === 0){
+  const legalCases = liste_moov(
+    plateau,
+    n_case_1,
+    l_case_1,
+    joueur,
+    is_en_passant_possible,
+    en_passant_colonne,
+    is_rock_possible
+  );}
+  else{
+    legalCases = legal_cases_no_echecs_liste_copy
+  }
+  console.log(legalCases)
+  legalCases.forEach(([row, col]) => {
+    const x = col;
+    const y = row;
+
+    const div = document.createElement("div");
+
+    const isEmpty = plateau[row][col][0] === " " && plateau[row][col][1] === "";
+
+    if (isEmpty) {
+      div.classList.add("dot-plein"); // case vide
+      div.style.top = `${y * 80 + 25}px`; // ajusté pour centrer
+      div.style.left = `${x * 80 + 25}px`;
+    } else {
+      div.classList.add("dot-cercle"); // pièce à capturer
+      div.style.top = `${y * 80 }px`; // ajusté pour centrer
+      div.style.left = `${x * 80}px`;
+    }
+
+    
+
+    echiquier.appendChild(div);
+  });
 }
 
 
@@ -229,10 +281,11 @@ function is_legal(plateau, n_case_1, l_case_1, n_case_2, l_case_2, joueur, is_en
 }
 async function move(plateau, x_case, y_case, second_time, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible) {
     let legal_cases_no_echecs_liste_copy = liste_moov(plateau, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
-    console.log(x_case, y_case, second_time, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible)
     let good_second_selected_case = false;
-
+    
     while (!good_second_selected_case) {
+        if (second_time === true) {
+            afficherDot(plateau,n_case_1,l_case_1,joueur,is_en_passant_possible,en_passant_colonne,is_rock_possible,legal_cases_no_echecs_liste_copy,1)}
         await new Promise(resolve => {
         const echiquier = document.getElementById("echiquier");
 
@@ -268,7 +321,6 @@ async function move(plateau, x_case, y_case, second_time, n_case_1, l_case_1, jo
                 good_second_selected_case = true;
             }
             else {
-                console.log("ici4")
                 good_second_selected_case = false;
             }
         } else {
@@ -315,7 +367,7 @@ function liste_moov(plateau, n_case_1, l_case_1, joueur, is_en_passant_possible,
     }
 
     let legal_cases_no_echecs_liste_copy = legal_cases_no_echecs_liste.map(row => [...row]);
-
+    console.log(legal_cases_no_echecs_liste_copy)
     if (plateau[n_case_1][l_case_1][0] === "R" && plateau[n_case_1][l_case_1][1] === joueur && is_echecs(plateau, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible)) {
         for (let legals_cases of legal_cases_no_echecs_liste_copy) {
             if (legals_cases[1] === l_case_1 + 2 || legals_cases[1] === l_case_1 - 2) {
@@ -453,7 +505,7 @@ let is_rock_possible = [true, true, true, true];
 let legal_cases_no_echecs_liste_copy = [];
 let n_case_2;
 let l_case_2;
-
+let en_passant_colonne = 0;
 afficherPlateau(plateau);
 draw_plateau(plateau)
 let last_two_cases = [[0,0],[0,0]]
@@ -475,8 +527,10 @@ while (end_game === false) {
 
         let good_selected_case = false;
         while (!good_selected_case) {
-            // move devra être adapté pour JS et pour obtenir les coordonnées
-            // Ici on suppose que move renvoie un tableau comme en Python
+            if (first_play){
+                afficherPlateau(plateau)}
+            else{
+                afficherPlateau(plateau, null, null, last_two_cases[0][0], last_two_cases[0][1], last_two_cases[1][0], last_two_cases[1][1])}
             let result = await move(plateau, x_case, y_case, false, 0, 0, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
             
             y_case_ = result[1];
@@ -498,7 +552,6 @@ while (end_game === false) {
             } else {
             afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
             }
-        console.log("ici1")
         let selected_same_color = true;
         while (selected_same_color === true) {
             if (first_play) {
@@ -506,10 +559,8 @@ while (end_game === false) {
                 } else {
                 afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
                 }
-            console.log(n_case_1)
-            console.log("ici1.5")
+            //afficherDot(plateau,n_case_1,l_case_1,joueur,is_en_passant_possible,en_passant_colonne,is_rock_possible)
             let result = await move(plateau, x_case, y_case, true, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
-            console.log("ici2")
             y_case_ = result[1];
             n_case_2 = result[1];
             x_case_ = result[0];
@@ -521,7 +572,6 @@ while (end_game === false) {
 
             if (plateau[y_case][x_case][1] !== joueur || (y_case === n_case_1 && x_case === l_case_1)) {
                 selected_same_color = false;
-                console.log("ici3")
             } else {
                 n_case_1 = y_case;
                 l_case_1 = x_case;
@@ -540,11 +590,10 @@ while (end_game === false) {
             else {
             afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
             }
-        console.log("ici2")
     }
     if ((is_en_passant_possible === true && n_case_1 === 3 && l_case_2 === en_passant_collone && plateau[n_case_1][l_case_1][0] === "P" && joueur === "B") ||
     (is_en_passant_possible === true && n_case_1 === 4 && l_case_2 === en_passant_collone && plateau[n_case_1][l_case_1][0] === "P" && joueur === "N")) {
-    plateau[n_case_1][l_case_2] = [" ", " "];
+    plateau[n_case_1][l_case_2] = [" ", ""];
 }
 
 if (joueur === "B") {
@@ -569,12 +618,12 @@ if (joueur === "B") {
     }
 
     if (plateau[n_case_1][l_case_1][0] === "R" && l_case_1 - l_case_2 === 2) {
-        plateau[7][0] = [" ", " "];
+        plateau[7][0] = [" ", ""];
         plateau[7][3] = ["T", "B"];
     }
 
     if (plateau[n_case_1][l_case_1][0] === "R" && l_case_2 - l_case_1 === 2) {
-        plateau[7][7] = [" ", " "];
+        plateau[7][7] = [" ", ""];
         plateau[7][5] = ["T", "B"];
     }
 } else {
@@ -596,18 +645,18 @@ if (joueur === "B") {
     }
 
     if (plateau[n_case_1][l_case_1][0] === "R" && l_case_1 - l_case_2 === 2) {
-        plateau[0][0] = [" ", " "];
+        plateau[0][0] = [" ", ""];
         plateau[0][3] = ["T", "N"];
     }
 
     if (plateau[n_case_1][l_case_1][0] === "R" && l_case_2 - l_case_1 === 2) {
-        plateau[0][7] = [" ", " "];
+        plateau[0][7] = [" ", ""];
         plateau[0][5] = ["T", "N"];
     }
 }
 // Déplacement de la pièce sur le plateau
 plateau[n_case_2][l_case_2] = plateau[n_case_1][l_case_1];
-plateau[n_case_1][l_case_1] = [" ", " "];
+plateau[n_case_1][l_case_1] = [" ", ""];
 
 // Promotion si un pion arrive sur la dernière rangée
 if (plateau[0][l_case_2][0] === "P" || plateau[7][l_case_2][0] === "P") {

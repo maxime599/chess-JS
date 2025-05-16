@@ -38,6 +38,27 @@
       background-color: rgba(251, 255, 0, 0.4); /* rouge semi-transparent */
       z-index: 0; /* en dessous des pièces */
     }
+    .dot-plein {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background-color: rgba(100, 100, 100, 0.7);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .dot-cercle {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      border: 5px solid rgba(100, 100, 100, 0.7);
+      border-radius: 50%;
+      background: transparent;
+      pointer-events: none;
+      z-index: 5;
+    }
+
   </style>
 </head>
 <body>
