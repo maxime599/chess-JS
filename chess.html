@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chess Game</title>
+    <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #ddd;
+      height: 100vh;
+    }
+    #echiquier {
+      position: relative;
+      width: 640px;
+      height: 640px;
+    }
+    #echiquier img.plateau {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    .piece {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+    
+
+  <div id="echiquier">
+    <img src="Pieces/200.png" alt="Plateau" class="plateau" />
+  </div>
+
+  
+    <script src="chess.js"></script>
+
+
+</body>
+</html>
