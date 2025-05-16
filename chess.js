@@ -208,14 +208,30 @@ function is_legal(plateau, n_case_1, l_case_1, n_case_2, l_case_2, joueur, is_en
 
     return true;
 }
-function move(plateau, x_case, y_case, second_time, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible) {
+async function move(plateau, x_case, y_case, second_time, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible) {
     let legal_cases_no_echecs_liste_copy = liste_moov(plateau, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
     console.log(x_case, y_case, second_time, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible)
     let good_second_selected_case = false;
 
     while (!good_second_selected_case) {
-        x_case = parseInt(prompt("x_case : "));
-        y_case = parseInt(prompt("y_case : "));
+        await new Promise(resolve => {
+        const echiquier = document.getElementById("echiquier");
+
+        function handleClick(event) {
+            const rect = echiquier.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Calcule x_case et y_case selon 80px par case
+            x_case = Math.floor(x / 80);
+            y_case = Math.floor(y / 80);
+
+            echiquier.removeEventListener("click", handleClick);
+            resolve();
+        }
+
+        echiquier.addEventListener("click", handleClick);
+        });
 
         if (second_time === true) {
             //for (let legals_cases of legal_cases_no_echecs_liste_copy) {
@@ -441,7 +457,7 @@ while (end_game === false) {
         while (!good_selected_case) {
             // move devra être adapté pour JS et pour obtenir les coordonnées
             // Ici on suppose que move renvoie un tableau comme en Python
-            let result = move(plateau, x_case, y_case, false, 0, 0, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
+            let result = await move(plateau, x_case, y_case, false, 0, 0, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
             
             y_case_ = result[1];
             n_case_1 = result[1];
@@ -463,7 +479,7 @@ while (end_game === false) {
         while (selected_same_color === true) {
             console.log(n_case_1)
             console.log("ici1.5")
-            let result = move(plateau, x_case, y_case, true, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
+            let result = await move(plateau, x_case, y_case, true, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
             console.log("ici2")
             y_case_ = result[1];
             n_case_2 = result[1];
