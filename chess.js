@@ -66,7 +66,6 @@ function afficherPlateau(plateau, listeBlanc, listeNoir, colorier_x = null, colo
         img.src = `Images/${colorCode}${pieceEn}.png`;
         img.style.top = `${ligne * 80}px`;
         img.style.left = `${col * 80}px`;
-        console.log(listeNoir, listeBlanc)
         afficherCaptures(listeNoir, listeBlanc)
         echiquier.appendChild(img);
       }
@@ -100,7 +99,6 @@ function afficherDot(
   else{
     legalCases = legal_cases_no_echecs_liste_copy
   }
-  console.log(legalCases)
   legalCases.forEach(([row, col]) => {
     const x = col;
     const y = row;
@@ -513,7 +511,6 @@ function liste_moov(plateau, n_case_1, l_case_1, joueur, is_en_passant_possible,
     }
 
     let legal_cases_no_echecs_liste_copy = legal_cases_no_echecs_liste.map(row => [...row]);
-    console.log(legal_cases_no_echecs_liste_copy)
     if (plateau[n_case_1][l_case_1][0] === "R" && plateau[n_case_1][l_case_1][1] === joueur && is_echecs(plateau, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible)) {
         for (let legals_cases of legal_cases_no_echecs_liste_copy) {
             if (legals_cases[1] === l_case_1 + 2 || legals_cases[1] === l_case_1 - 2) {
@@ -596,16 +593,81 @@ function can_moov(plateau, joueur, is_en_passant_possible, en_passant_collone, i
     }
     return false;
 }
-function promotion() {
-    let pieces = ["D", "F", "T", "C"];
-    let piece = prompt("rang dans les pieces ['D','F','T','C']  :");
-    // Convertir la saisie en nombre et vérifier validité
-    let index = parseInt(piece, 10);
-    if (isNaN(index) || index < 0 || index >= pieces.length) {
-        return null; // ou tu peux relancer la demande ou gérer l'erreur autrement
-    }
-    return pieces[index];
+
+function promotion(couleur) {
+  return new Promise((resolve) => {
+    const pieces = {
+      "D": "q",
+      "T": "r",
+      "F": "b",
+      "C": "n"
+    };
+
+    const prefixe = couleur === "B" ? "w" : "b";
+
+    // Supprimer ancienne popup si elle existe
+    const ancienne = document.getElementById("popup-promotion");
+    if (ancienne) ancienne.remove();
+
+    // Créer fond sombre (overlay)
+    const overlay = document.createElement("div");
+    overlay.id = "popup-promotion";
+    Object.assign(overlay.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0, 0, 0, 0.6)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    });
+
+    // Boîte intérieure
+    const popup = document.createElement("div");
+    Object.assign(popup.style, {
+      backgroundColor: "#fff",
+      padding: "20px",
+      borderRadius: "10px",
+      display: "flex",
+      gap: "15px",
+      boxShadow: "0 0 15px rgba(0,0,0,0.3)",
+    });
+
+    // Créer chaque image-bouton
+    Object.entries(pieces).forEach(([code, suffixe]) => {
+      const img = document.createElement("img");
+      img.src = `Images/${prefixe}${suffixe}.png`;
+      img.alt = code;
+      Object.assign(img.style, {
+        width: "70px",
+        height: "70px",
+        cursor: "pointer",
+        userSelect: "none",
+        display: "block",
+      });
+
+      // Fixe : réactive les événements souris
+      img.style.pointerEvents = "auto";
+
+      // Handler de clic
+      img.addEventListener("click", (event) => {
+        event.stopPropagation(); // évite que le clic remonte
+        console.log("Promotion choisie :", code); // DEBUG
+        overlay.remove(); // ferme la fenêtre
+        resolve(code); // retourne la pièce choisie
+      });
+
+      popup.appendChild(img);
+    });
+
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+  });
 }
+
 function est_nulle_par_manque_de_materiel(liste_blanc, liste_noir) {
     // Comparaison simple des objets en JS nécessite une fonction de comparaison
     function equals(obj1, obj2) {
@@ -809,7 +871,9 @@ plateau[n_case_1][l_case_1] = [" ", ""];
 
 // Promotion si un pion arrive sur la dernière rangée
 if (plateau[0][l_case_2][0] === "P" || plateau[7][l_case_2][0] === "P") {
-    plateau[n_case_2][l_case_2] = promotion(joueur);
+    plateau[n_case_2][l_case_2][0] = await promotion(joueur);
+    plateau[n_case_2][l_case_2][1] = joueur
+    console.log(plateau[n_case_2][l_case_2])
 }
 
 // Changement de joueur
@@ -840,7 +904,7 @@ if (can_moov(plateau, joueur, is_en_passant_possible, en_passant_collone, is_roc
 // Comptage des pièces restantes pour chaque camp
 liste_blanc = {"R": 0, "D": 0, "P": 0, "F": 0, "C": 0, "T": 0};
 liste_noir = {"R": 0, "D": 0, "P": 0, "F": 0, "C": 0, "T": 0};
-console.log(liste_blanc,liste_noir)
+9
 for (let row of plateau) {
     for (let cases of row) {
         if (cases[1] === "B") {
@@ -867,7 +931,6 @@ if (count === 3) {
   afficher_resultat_fin_partie(plateau, 1, null);
   end_game = true;
   console.log("nul")
-  console.log(liste_plateaux)
 }
 // Redessine le plateau
 afficherPlateau(plateau,liste_blanc,liste_noir)
