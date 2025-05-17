@@ -58,6 +58,39 @@
       pointer-events: none;
       z-index: 5;
     }
+    .capture-ligne {
+      margin-bottom: 16px;
+      font-family: Arial, sans-serif;
+    }
+
+    .capture-titre {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .capture-pieces {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: nowrap;
+    }
+
+    .capture-img {
+      height: 32px;
+      width: auto;
+    }
+
+    .capture-score {
+      font-size: 16px;
+      color: green;
+      font-weight: bold;
+      margin-left: 6px;
+    }
+    img {
+      user-select: none;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
 
   </style>
 </head>
@@ -66,8 +99,9 @@
     
 
   <div id="echiquier">
-    <img src="Pieces/200.png" alt="Plateau" class="plateau" />
+    <img src="Images/200.png" alt="Plateau" class="plateau" />
   </div>
+  <div id="zone-captures" style="margin-left: 100px;"></div>
 
   
     <script src="chess.js"></script>

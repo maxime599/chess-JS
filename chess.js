@@ -27,7 +27,7 @@ const pieceMap = {
   "R": "k", // roi
 };
 
-function afficherPlateau(plateau, colorier_x = null, colorier_y = null, colorier_x2 = null, colorier_y2 = null, colorier_x3 = null, colorier_y3 = null) {
+function afficherPlateau(plateau, listeBlanc, listeNoir, colorier_x = null, colorier_y = null, colorier_x2 = null, colorier_y2 = null, colorier_x3 = null, colorier_y3 = null) {
   const echiquier = document.getElementById("echiquier");
 
   // Supprime les anciennes pièces et surbrillances
@@ -63,10 +63,11 @@ function afficherPlateau(plateau, colorier_x = null, colorier_y = null, colorier
         const pieceEn = pieceMap[pieceFr];
         const colorCode = couleur === "N" ? "b" : "w";
 
-        img.src = `Pieces/${colorCode}${pieceEn}.png`;
+        img.src = `Images/${colorCode}${pieceEn}.png`;
         img.style.top = `${ligne * 80}px`;
         img.style.left = `${col * 80}px`;
-
+        console.log(listeNoir, listeBlanc)
+        afficherCaptures(listeNoir, listeBlanc)
         echiquier.appendChild(img);
       }
     }
@@ -155,7 +156,7 @@ function afficher_resultat_fin_partie(plateau, resultat, joueur) {
 
     function afficherImageDansCase(i, j, src) {
       const img = document.createElement("img");
-      img.src = `Pieces/${src}`;
+      img.src = `Images/${src}`;
       img.classList.add("resultat-image");
       img.style.position = "absolute";
       img.style.width = "80px";
@@ -193,6 +194,79 @@ function afficher_resultat_fin_partie(plateau, resultat, joueur) {
       afficherImageDansCase(pi, pj, noms.defaite);
     }
   }, 100);
+}
+
+function afficherCaptures(listeBlanc, listeNoir) {
+  const listeTotal = { P: 8, C: 2, F: 2, T: 2, D: 1, R: 1 };
+  const valeurs = { P: 1, C: 3, F: 3, T: 5, D: 9 };
+
+  const prisesBlanc = {};
+  const prisesNoir = {};
+  let scoreBlanc = 0;
+  let scoreNoir = 0;
+
+  for (const piece in listeTotal) {
+    const captNoir = listeTotal[piece] - (listeBlanc[piece] || 0);
+    const captBlanc = listeTotal[piece] - (listeNoir[piece] || 0);
+    prisesNoir[piece] = captNoir;
+    prisesBlanc[piece] = captBlanc;
+
+    if (valeurs[piece]) {
+      scoreNoir += captNoir * valeurs[piece];
+      scoreBlanc += captBlanc * valeurs[piece];
+    }
+  }
+
+  const avantageBlanc = scoreBlanc - scoreNoir;
+  const avantageNoir = scoreNoir - scoreBlanc;
+
+  const zone = document.getElementById("zone-captures");
+  zone.innerHTML = ""; // Clear previous
+
+  function ajouterLigne(titre, liste, couleur, avantage) {
+    const ligne = document.createElement("div");
+    ligne.className = "capture-ligne";
+
+    const titreDiv = document.createElement("div");
+    titreDiv.textContent = titre;
+    titreDiv.className = "capture-titre";
+    ligne.appendChild(titreDiv);
+
+    const piecesContainer = document.createElement("div");
+    piecesContainer.className = "capture-pieces";
+
+    const codeCouleur = couleur === "blanc" ? "w" : "b";
+    const codePiece = { P: "p", C: "n", F: "b", T: "r", D: "q" };
+
+    ["P", "C", "F", "T", "D"].forEach(piece => {
+      const count = liste[piece];
+      if (count > 0) {
+        const nomFichier = `${count}${codeCouleur}${codePiece[piece]}.png`;
+        const img = document.createElement("img");
+        img.src = `Images/Pieces prises/${nomFichier}`;
+        img.alt = `${count} ${piece}`;
+        img.className = "capture-img";
+        piecesContainer.appendChild(img);
+      }
+    });
+
+    // Ajouter les pièces
+    ligne.appendChild(piecesContainer);
+
+    // Ajouter le score dans un span juste après les images
+    if (avantage > 0) {
+      const scoreSpan = document.createElement("span");
+      scoreSpan.textContent = `+${avantage}`;
+      scoreSpan.className = "capture-score";
+      piecesContainer.appendChild(scoreSpan);
+    }
+
+    // Ajouter toute la ligne à la zone principale
+    zone.appendChild(ligne);
+  }
+
+  ajouterLigne("⚪ Blancs ont pris :", prisesNoir, "noir", avantageNoir);
+  ajouterLigne("⚫ Noirs ont pris :", prisesBlanc, "blanc", avantageBlanc);
 }
 
 
@@ -532,7 +606,7 @@ function promotion() {
     }
     return pieces[index];
 }
-function est_nulle_par_manque_de_materiel(liste_blanc, liste_noire) {
+function est_nulle_par_manque_de_materiel(liste_blanc, liste_noir) {
     // Comparaison simple des objets en JS nécessite une fonction de comparaison
     function equals(obj1, obj2) {
         const keys1 = Object.keys(obj1);
@@ -544,23 +618,23 @@ function est_nulle_par_manque_de_materiel(liste_blanc, liste_noire) {
         return true;
     }
 
-    if (equals(liste_blanc, {R:1, D:0, P:0, F:0, C:0, T:0}) && equals(liste_noire, {R:1, D:0, P:0, F:0, C:0, T:0})) {
+    if (equals(liste_blanc, {R:1, D:0, P:0, F:0, C:0, T:0}) && equals(liste_noir, {R:1, D:0, P:0, F:0, C:0, T:0})) {
         return true;
     }
 
-    if ((equals(liste_blanc, {R:1, D:0, P:0, F:1, C:0, T:0}) && equals(liste_noire, {R:1, D:0, P:0, F:0, C:0, T:0})) ||
-        (equals(liste_noire, {R:1, D:0, P:0, F:1, C:0, T:0}) && equals(liste_blanc, {R:1, D:0, P:0, F:0, C:0, T:0}))) {
+    if ((equals(liste_blanc, {R:1, D:0, P:0, F:1, C:0, T:0}) && equals(liste_noir, {R:1, D:0, P:0, F:0, C:0, T:0})) ||
+        (equals(liste_noir, {R:1, D:0, P:0, F:1, C:0, T:0}) && equals(liste_blanc, {R:1, D:0, P:0, F:0, C:0, T:0}))) {
         return true;
     }
 
-    if ((equals(liste_blanc, {R:1, D:0, P:0, F:0, C:1, T:0}) && equals(liste_noire, {R:1, D:0, P:0, F:0, C:0, T:0})) ||
-        (equals(liste_noire, {R:1, D:0, P:0, F:0, C:1, T:0}) && equals(liste_blanc, {R:1, D:0, P:0, F:0, C:0, T:0}))) {
+    if ((equals(liste_blanc, {R:1, D:0, P:0, F:0, C:1, T:0}) && equals(liste_noir, {R:1, D:0, P:0, F:0, C:0, T:0})) ||
+        (equals(liste_noir, {R:1, D:0, P:0, F:0, C:1, T:0}) && equals(liste_blanc, {R:1, D:0, P:0, F:0, C:0, T:0}))) {
         return true;
     }
 
     const sumValues = (obj) => Object.values(obj).reduce((a, b) => a + b, 0);
 
-    if (liste_blanc.F === 1 && liste_noire.F === 1 && sumValues(liste_blanc) === 2 && sumValues(liste_noire) === 2) {
+    if (liste_blanc.F === 1 && liste_noir.F === 1 && sumValues(liste_blanc) === 2 && sumValues(liste_noir) === 2) {
         return true;
     }
 
@@ -578,7 +652,9 @@ let legal_cases_no_echecs_liste_copy = [];
 let n_case_2;
 let l_case_2;
 let en_passant_colonne = 0;
-afficherPlateau(plateau);
+let liste_blanc = {"R":1,"D":1,"P":8,"F":2,"C":2,"T":2}
+let liste_noir = {"R":1,"D":1,"P":8,"F":2,"C":2,"T":2} 
+afficherPlateau(plateau,liste_blanc,liste_noir);
 draw_plateau(plateau)
 let last_two_cases = [[0,0],[0,0]]
 let first_play = true
@@ -601,9 +677,9 @@ while (end_game === false) {
         let good_selected_case = false;
         while (!good_selected_case) {
             if (first_play){
-                afficherPlateau(plateau)}
+                afficherPlateau(plateau,liste_blanc,liste_noir)}
             else{
-                afficherPlateau(plateau, null, null, last_two_cases[0][0], last_two_cases[0][1], last_two_cases[1][0], last_two_cases[1][1])}
+                afficherPlateau(plateau,liste_blanc,liste_noir, null, null, last_two_cases[0][0], last_two_cases[0][1], last_two_cases[1][0], last_two_cases[1][1])}
             let result = await move(plateau, x_case, y_case, false, 0, 0, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
             
             y_case_ = result[1];
@@ -621,16 +697,16 @@ while (end_game === false) {
             
         }
         if (first_play) {
-            afficherPlateau(plateau, x_case, y_case);
+            afficherPlateau(plateau,liste_blanc,liste_noir, x_case, y_case);
             } else {
-            afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
+            afficherPlateau(plateau,liste_blanc,liste_noir,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
             }
         let selected_same_color = true;
         while (selected_same_color === true) {
             if (first_play) {
-                afficherPlateau(plateau, x_case, y_case);
+                afficherPlateau(plateau,liste_blanc,liste_noir, x_case, y_case);
                 } else {
-                afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
+                afficherPlateau(plateau,liste_blanc,liste_noir,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
                 }
             //afficherDot(plateau,n_case_1,l_case_1,joueur,is_en_passant_possible,en_passant_colonne,is_rock_possible)
             let result = await move(plateau, x_case, y_case, true, n_case_1, l_case_1, joueur, is_en_passant_possible, en_passant_collone, is_rock_possible);
@@ -658,10 +734,10 @@ while (end_game === false) {
             }
         }
          if (first_play) {
-            afficherPlateau(plateau, x_case, y_case);
+            afficherPlateau(plateau,liste_blanc,liste_noir, x_case, y_case);
             } 
             else {
-            afficherPlateau(plateau,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
+            afficherPlateau(plateau,liste_blanc,liste_noir,x_case,y_case,last_two_cases[0][0],last_two_cases[0][1],last_two_cases[1][0],last_two_cases[1][1]);
             }
     }
     if ((is_en_passant_possible === true && n_case_1 === 3 && l_case_2 === en_passant_collone && plateau[n_case_1][l_case_1][0] === "P" && joueur === "B") ||
@@ -762,22 +838,22 @@ if (can_moov(plateau, joueur, is_en_passant_possible, en_passant_collone, is_roc
 }
 
 // Comptage des pièces restantes pour chaque camp
-const liste_blanc = {"R": 0, "D": 0, "P": 0, "F": 0, "C": 0, "T": 0};
-const liste_noire = {"R": 0, "D": 0, "P": 0, "F": 0, "C": 0, "T": 0};
-
+liste_blanc = {"R": 0, "D": 0, "P": 0, "F": 0, "C": 0, "T": 0};
+liste_noir = {"R": 0, "D": 0, "P": 0, "F": 0, "C": 0, "T": 0};
+console.log(liste_blanc,liste_noir)
 for (let row of plateau) {
     for (let cases of row) {
         if (cases[1] === "B") {
             liste_blanc[cases[0]]++;
         }
         if (cases[1] === "N") {
-            liste_noire[cases[0]]++;
+            liste_noir[cases[0]]++;
         }
     }
 }
 
 // Vérification de la nulle par manque de matériel
-if (est_nulle_par_manque_de_materiel(liste_blanc, liste_noire)) {
+if (est_nulle_par_manque_de_materiel(liste_blanc, liste_noir)) {
     end_game = true;
     console.log("nul");
     afficher_resultat_fin_partie(plateau, resultat=1, joueur=null)
@@ -794,7 +870,7 @@ if (count === 3) {
   console.log(liste_plateaux)
 }
 // Redessine le plateau
-afficherPlateau(plateau)
+afficherPlateau(plateau,liste_blanc,liste_noir)
 await new Promise(resolve => setTimeout(resolve, 50)); // pause pour forcer le rendu
 last_two_cases = [
   [l_case_1, n_case_1],
@@ -802,7 +878,7 @@ last_two_cases = [
 ];
 
 afficherPlateau(
-  plateau,
+  plateau,liste_blanc,liste_noir,
   null,
   null,
   last_two_cases[0][0],
@@ -819,7 +895,7 @@ first_play = false;
 
 
 window.onload = () => {
-  afficherPlateau(plateau);
+  afficherPlateau(plateau,liste_blanc,liste_noir);
   setTimeout(() => {gameLoop()}, 100);
-  ; // Appelle ta boucle principale ici
+  ; 
 };
